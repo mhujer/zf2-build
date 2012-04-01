@@ -25,7 +25,7 @@
     </target>
     
     <target name="phpcs" depends="prepare" description="Kontrola Coding standards">
-        <phpcodesniffer standard="${project.basedir}\phpcs-zf2.xml">
+        <phpcodesniffer standard="${project.basedir}/phpcs-zf2.xml">
             <fileset refid="src"/>
             <formatter type="default" usefile="false"/>
             <formatter type="checkstyle" outfile="${zf2}/build/checkstyle-phpcs.xml"/>
