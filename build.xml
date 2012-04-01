@@ -1,0 +1,69 @@
+<project name="zf2" default="build">
+    <resolvepath propertyName="zf2" file="${project.basedir}/workspace/"/>
+
+    <target name="build" depends="phpcs,phpcpd,phploc,phpcb"/> 
+  
+    <!-- lint, apigen, pdepend, phpmd -->
+    
+    <fileset id="src" dir="${zf2}/library/Zend/">
+        <include name="**/*.php"/>
+    </fileset>
+    
+    <target name="cleanup" description="Vyčistění workspace">
+        <delete dir="${zf2}/build"/>
+    </target>
+    
+    <target name="prepare" depends="cleanup" description="Příprava workspace">
+        <mkdir dir="${zf2}/build"/>
+        <delete file="${zf2}/library/Zend/EventManager/ProvidesEvents.php"/> <!-- Problem with trait -->
+    </target>
+    
+    <target name="lint" depends="prepare" description="Spoustí syntaktickou kontrolu souborů v uvedených adresářích">
+        <phplint haltonfailure="true">
+            <fileset refid="src"/>
+        </phplint>
+    </target>
+    
+    <target name="phpcs" depends="prepare" description="Kontrola Coding standards">
+        <phpcodesniffer standard="${project.basedir}\phpcs-zf2.xml">
+            <fileset refid="src"/>
+            <formatter type="default" usefile="false"/>
+            <formatter type="checkstyle" outfile="${zf2}/build/checkstyle-phpcs.xml"/>
+        </phpcodesniffer>
+    </target>
+    
+    <target name="apigen" depends="prepare" description="Generování dokumentace">
+        <apigen source="${zf2}/library/Zend/" destination="${zf2}/build/docs" report="${zf2}/build/checkstyle-apigen.xml"/>
+    </target>
+    
+    <target name="phpcpd" depends="prepare" description="Kontrola CPD">
+        <phpcpd>
+            <fileset refid="src"/>
+            <formatter type="pmd" outfile="${zf2}/build/pmd-cpd.xml"/>
+        </phpcpd>
+    </target>
+    
+    <target name="phploc" depends="prepare" description="Analýza PHPLOC">
+        <exec command="phploc --log-csv ${zf2}/build/phploc.csv ${zf2}/library/Zend/" logoutput="true" />
+    </target>
+    
+    <target name="pdepend" depends="prepare" description="Analýza nástrojem PDepend">
+        <phpdepend>
+            <fileset refid="src"/>
+            <logger type="jdepend-xml" outfile="${zf2}/build/jdepend.xml"/>
+            <logger type="jdepend-chart" outfile="${zf2}/build/dependencies.svg"/>
+            <logger type="overview-pyramid" outfile="${zf2}/build/overview-pyramid.svg"/>
+        </phpdepend>
+    </target>
+    
+    <target name="phpmd" depends="prepare" description="PMD analýza">
+        <phpmd rulesets="${project.basedir}/phpmd-zf2.xml">
+            <fileset refid="src"/>
+            <formatter type="xml" outfile="${zf2}/build/pmd.xml"/>
+        </phpmd>
+    </target>
+    
+    <target name="phpcb" depends="phpcs, phpcpd" description="Vygeneruje souhrnný výstup chyb v kódu pomocí PHP_CodeBrowser">
+        <exec command="phpcb  --log ${zf2}/build --source ${zf2}/library/Zend/ --output ${zf2}/build/code-browser" logoutput="true" />
+    </target>
+</project>
